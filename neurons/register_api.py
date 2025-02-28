@@ -53,6 +53,7 @@ from compute.utils.db import ComputeDb
 from compute.utils.parser import ComputeArgPaser
 from compute.wandb.wandb import ComputeWandb
 from neurons.Validator.database.allocate import (
+    get_hotkey_reliability_reports_db,
     select_allocate_miners_hotkey,
     update_allocation_db,
     get_miner_details,
@@ -221,7 +222,7 @@ class HotkeyReliabilityReport(BaseModel):
     failed_14d: Optional[int] = 0
     aborted: Optional[int] = 0
     rental_best: Optional[int] = 0
-    blackllisted: Optional[bool] = False
+    blacklisted: Optional[bool] = False
 
 
 # Response Models
@@ -2659,8 +2660,8 @@ class RegisterAPI:
                 )
 
         @self.app.post(
-            "/service/hotkey_reliability_report",
-            tags=["WandB"],
+            "/service/submit_hotkey_reliability_report",
+            tags=["Report"],
             response_model=SuccessResponse | ErrorResponse,
             responses={
                 200: {
@@ -2677,7 +2678,7 @@ class RegisterAPI:
                 },
             },
         )
-        async def hotkey_reliability_report(
+        async def submit_hotkey_reliability_report(
             report: List[HotkeyReliabilityReport]
         ) -> JSONResponse:
             """
@@ -2723,6 +2724,57 @@ class RegisterAPI:
                 content={
                     "success": True,
                     "message": "Save hotkey reliability report successfully",
+                },
+            )
+
+        @self.app.post(
+            "/service/get_hotkey_reliability_reports",
+            tags=["Report"],
+            response_model=SuccessResponse | ErrorResponse,
+            responses={
+                200: {
+                    "model": SuccessResponse,
+                    "description": "Retrieving hotkey reliability report successfully.",
+                },
+                400: {
+                    "model": ErrorResponse,
+                    "description": "Retrieving hotkey reliability report failed"
+                },
+                422: {
+                    "model": ErrorResponse,
+                    "description": "Validation Error, Please check the request body.",
+                },
+            },
+        )
+        async def get_hotkey_reliability_reports(
+            hotkey: Optional[str] = None
+        ) -> JSONResponse:
+            """
+            The hotkey reliability report retrieval endpoint. <br>
+            """
+            try:
+
+                # Instantiate the connection to the db
+                db = ComputeDb()
+                # Update the hotkey_reliability_report database with the valid data
+                reports = get_hotkey_reliability_reports_db(db, hotkey)
+            except Exception as e:
+                print(f"Error getting hotkey reliability reports: {e}")
+                return JSONResponse(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    content={
+                        "success": False,
+                        "message": "Error occurred while getting report data",
+                        "err_detail": e.__repr__(),
+                    },
+                )
+
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={
+                    "success": True,
+                    "message": "Retrieval hotkey reliability report successfully",
+                    "data": jsonable_encoder(reports),
                 },
             )
 
