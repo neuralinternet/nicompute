@@ -56,6 +56,7 @@ from neurons.Validator.database.allocate import (
     select_allocate_miners_hotkey,
     update_allocation_db,
     get_miner_details,
+    update_hotkey_reliability_report_db,
 )
 
 # Import FastAPI Libraries
@@ -209,6 +210,18 @@ class ResourceQuery(BaseModel):
     hard_disk_total_max: Optional[float] = None
     ram_total_min: Optional[float] = None
     ram_total_max: Optional[float] = None
+
+
+class HotkeyReliabilityReport(BaseModel):
+    timestamp: str
+    hotkey: str
+    rentals: Optional[int] = 0
+    failed: Optional[int] = 0
+    rentals_14d: Optional[int] = 0
+    failed_14d: Optional[int] = 0
+    aborted: Optional[int] = 0
+    rental_best: Optional[int] = 0
+    blackllisted: Optional[bool] = False
 
 
 # Response Models
@@ -2645,6 +2658,75 @@ class RegisterAPI:
                     },
                 )
 
+        @self.app.post(
+            "/service/hotkey_reliability_report",
+            tags=["WandB"],
+            response_model=SuccessResponse | ErrorResponse,
+            responses={
+                200: {
+                    "model": SuccessResponse,
+                    "description": "Generate hotkey reliability report successfully.",
+                },
+                400: {
+                    "model": ErrorResponse,
+                    "description": "Process hotkey reliability report failed"
+                },
+                422: {
+                    "model": ErrorResponse,
+                    "description": "Validation Error, Please check the request body.",
+                },
+            },
+        )
+        async def hotkey_reliability_report(
+            report: List[HotkeyReliabilityReport]
+        ) -> JSONResponse:
+            """
+            The hotkey reliability report submission endpoint. <br>
+            """
+            if not report:
+                return JSONResponse(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    content={
+                        "success": False,
+                        "message": "Missing report input",
+                    },
+                )
+            try:
+                # Update the hotkey_reliability_report database with the valid data
+                update_hotkey_reliability_report_db(report)
+            except Exception as e:
+                print(f"Error updating hotkey_reliability_report: {e}")
+                return JSONResponse(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    content={
+                        "success": False,
+                        "message": "Error occurred while updating report data",
+                        "err_detail": e.__repr__(),
+                    },
+                )
+
+            try:
+                await run_in_threadpool(self._update_hotkey_reliability_report, report)
+            except Exception as e:
+                bt.logging.info(f"API: Error updating wandb : {e}")
+                return JSONResponse(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    content={
+                        "success": False,
+                        "message": "Error occurred while updating report data to wandb",
+                        "err_detail": e.__repr__(),
+                    },
+                )
+
+            return JSONResponse(
+                status_code=status.HTTP_200_OK,
+                content={
+                    "success": True,
+                    "message": "Save hotkey reliability report successfully",
+                },
+            )
+
+
     @staticmethod
     def _init_config():
         """
@@ -2727,6 +2809,29 @@ class RegisterAPI:
             os.makedirs(config.full_path, exist_ok=True)
 
         return config
+
+    def _update_hotkey_reliability_report(self, reports):
+        """
+        This function updates the hotkey reliability report on validator side.
+        It's useless to alter this information as it needs to be signed by a valid validator hotkey.
+        """
+        self.wandb.api.flush()
+
+        # Update the configuration with the new keys
+        update_dict = {
+            "hotkey_reliability_report": [
+                report.__dict__
+                for report in reports
+            ]
+        }
+        self.wandb.run.config.update(update_dict, allow_val_change=True)
+
+        # Track penalized hotkeys checklist over time
+        self.wandb.run.log({"hotkey_reliability_report": self.wandb.run.config["hotkey_reliability_report"]})
+
+        # Sign the run
+        self.wandb.sign_run()
+
 
     async def _allocate_container(self, device_requirement, timeline, public_key, docker_requirement: dict):
         """

@@ -16,6 +16,7 @@
 # DEALINGS IN THE SOFTWARE.
 
 import json
+from datetime import datetime
 from typing import Tuple, Any
 
 import bittensor as bt
@@ -228,7 +229,7 @@ def update_allocation_db(hotkey: str, info: str, flag: bool):
         cursor.close()
         db.close()
 
-#  Update the ablacklist db
+#  Update the blacklist db
 def update_blacklist_db(hotkeys: list, flag: bool):
     db = ComputeDb()
     cursor = db.get_cursor()
@@ -288,3 +289,39 @@ def allocate_check_if_miner_meet(details, required_details):
         bt.logging.error("The format is wrong, please check it again.")
         return False
     return True
+
+#  Update the hotkey_reliability_report db
+def update_hotkey_reliability_report_db(reports: list):
+    db = ComputeDb()
+    cursor = db.get_cursor()
+    try:
+
+        # Prepare data for bulk insert
+        report_details_to_insert = [
+            (
+                datetime.strptime(report.timestamp, '%Y-%m-%dT%H:%M:%S.%fZ'),
+                report.hotkey,
+                report.rentals,
+                report.failed,
+                report.rentals_14d,
+                report.failed_14d,
+                report.aborted,
+                report.rental_best,
+                report.blackllisted
+            )
+            for report in reports
+        ]
+        # Perform bulk insert using executemany
+        cursor.executemany(
+            "INSERT INTO hotkey_reliability_report"
+            "(timestamp, hotkey, rentals, failed, rentals_14d, failed_14d, aborted, rental_best, blackllisted)"
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            report_details_to_insert,
+        )
+        db.conn.commit()
+    except Exception as e:
+        db.conn.rollback()
+        bt.logging.error(f"Error while updating hotkey_reliability_report: {e}")
+    finally:
+        cursor.close()
+        db.close()
