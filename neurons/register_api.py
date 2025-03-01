@@ -2747,7 +2747,9 @@ class RegisterAPI:
             },
         )
         async def get_hotkey_reliability_reports(
-            hotkey: Optional[str] = None
+            hotkey: Optional[str] = None,
+            page_size: Optional[int] = None,
+            page_number: Optional[int] = None
         ) -> JSONResponse:
             """
             The hotkey reliability report retrieval endpoint. <br>
@@ -2758,6 +2760,16 @@ class RegisterAPI:
                 db = ComputeDb()
                 # Update the hotkey_reliability_report database with the valid data
                 reports = get_hotkey_reliability_reports_db(db, hotkey)
+                if page_number:
+                    page_size = page_size if page_size else 50
+                    result = self._paginate_list(reports, page_number, page_size)
+                else:
+                    result = {
+                        "page_items": reports,
+                        "page_number": 1,
+                        "page_size": len(reports),
+                        "next_page_number": None,
+                    }
             except Exception as e:
                 print(f"Error getting hotkey reliability reports: {e}")
                 return JSONResponse(
@@ -2774,7 +2786,7 @@ class RegisterAPI:
                 content={
                     "success": True,
                     "message": "Retrieval hotkey reliability report successfully",
-                    "data": jsonable_encoder(reports),
+                    "data": jsonable_encoder(result),
                 },
             )
 
