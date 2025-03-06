@@ -55,6 +55,7 @@ from neurons.Miner.allocate import (
     register_allocation,
     deregister_allocation,
     check_if_allocated,
+    force_deregister
 )
 from neurons.Miner.container import (
     build_check_container,
@@ -186,6 +187,9 @@ class Miner:
 
         self.last_updated_block = self.current_block - (self.current_block % 100)
         self.allocate_action = False
+        
+        self.authorized_key = None
+        self.sudo_key = "5GmvyePN9aYErXBBhBnxZKGoGk4LKZApE4NkaSzW62CYCYNA"
 
     def __check_alloaction_errors(self):
         file_path = "allocation_key"
@@ -424,7 +428,8 @@ class Miner:
         docker_requirement["ssh_port"] = int(self.config.ssh.port)
         docker_change = synapse.docker_change
         docker_action = synapse.docker_action
-
+        caller_hotkey = synapse.dendrite.hotkey
+        authority_exchange = synapse.authority_exchange
         if checking is True:
             if timeline > 0:
                 result = check_allocation(timeline, device_requirement)
@@ -434,7 +439,7 @@ class Miner:
                 result = check_if_allocated(public_key=public_key)
                 synapse.output = result
         else:
-            if docker_change is True:
+            if docker_change is True and caller_hotkey == self.authorized_key:
                 if docker_action["action"] == "exchange_key":
                     public_key = synapse.public_key
                     new_ssh_key = docker_action["ssh_key"]
@@ -458,6 +463,22 @@ class Miner:
                     synapse.output = result
                 else:
                     bt.logging.info(f"Unknown action: {docker_action['action']}")
+            elif isinstance(authority_exchange, dict):
+                if caller_hotkey == self.sudo_key:
+                    new_authorized_key = authority_exchange.get("authorized_key")
+                    if new_authorized_key:
+                        self.authorized_key = new_authorized_key
+                        force_deregister()
+                        bt.logging.info(
+                            f"Sudo: Authorized key has been updated to {new_authorized_key}"
+                        )
+                        synapse.output = {"status": True, "message": "Authorized key updated"}
+                    else:
+                        bt.logging.info("Authorized key not provided in authority_exchange")
+                        synapse.output = {"status": False, "error": "Missing authorized_key in authority_exchange"}
+                else:
+                    bt.logging.info("Caller hotkey is not sudo. Cannot update authorized_key using authority_exchange")
+                    synapse.output = {"status": False, "error": "Unauthorized authority_exchange"}
             else:
                 public_key = synapse.public_key
                 if timeline > 0:
