@@ -938,46 +938,46 @@ class Validator:
             docker_requirement = {
                 "base_image": "pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime",
             }
-
-            # Simulate an allocation query with Allocate
-            check_allocation = await self.dendrite(
-                axon,
-                Allocate(timeline=1, device_requirement=device_requirement, checking=True),
-                timeout=30,
-                )
-            if check_allocation  and check_allocation ["status"] is True:
-                response = await self.dendrite(
+            async with self.dendrite as dendrite:
+                # Simulate an allocation query with Allocate
+                check_allocation = await dendrite(
                     axon,
-                    Allocate(
-                        timeline=1,
-                        device_requirement=device_requirement,
-                        checking=False,
-                        public_key=public_key,
-                        docker_requirement=docker_requirement,
-                    ),
+                    Allocate(timeline=1, device_requirement=device_requirement, checking=True),
                     timeout=30,
-                )
-                if response and response.get("status") is True:
-                    bt.logging.trace(f"Successfully allocated miner {axon.hotkey}")
-                    decrypted_info_str = rsa.decrypt_data(
-                        private_key.encode("utf-8"),
-                        base64.b64decode(response["info"]),
                     )
-                    info = json.loads(decrypted_info_str)
+                if check_allocation and check_allocation ["status"] is True:
+                    response = await dendrite(
+                        axon,
+                        Allocate(
+                            timeline=1,
+                            device_requirement=device_requirement,
+                            checking=False,
+                            public_key=public_key,
+                            docker_requirement=docker_requirement,
+                        ),
+                        timeout=30,
+                    )
+                    if response and response.get("status") is True:
+                        bt.logging.trace(f"Successfully allocated miner {axon.hotkey}")
+                        decrypted_info_str = rsa.decrypt_data(
+                            private_key.encode("utf-8"),
+                            base64.b64decode(response["info"]),
+                        )
+                        info = json.loads(decrypted_info_str)
 
-                    miner_info = {
-                        'host': axon.ip,
-                        'port': info['port'],
-                        'username': info['username'],
-                        'password': info['password'],
-                    }
-                    return miner_info
+                        miner_info = {
+                            'host': axon.ip,
+                            'port': info['port'],
+                            'username': info['username'],
+                            'password': info['password'],
+                        }
+                        return miner_info
+                    else:
+                        bt.logging.trace(f"{axon.hotkey}: Miner allocation failed or no response received.")
+                        return None
                 else:
-                    bt.logging.trace(f"{axon.hotkey}: Miner allocation failed or no response received.")
+                    bt.logging.trace(f"{axon.hotkey}: Miner aready allocated or no response received.")
                     return None
-            else:
-                bt.logging.trace(f"{axon.hotkey}: Miner aready allocated or no response received.")
-                return None
 
         except ConnectionRefusedError as e:
             bt.logging.error(f"{axon.hotkey}: Connection refused during miner allocation: {e}")
@@ -1018,29 +1018,30 @@ class Validator:
 
             while allocation_status and retry_count < max_retries:
                 try:
-                    # Send deallocation query
-                    deregister_response = await self.dendrite(
-                        axon,
-                        Allocate(
-                            timeline=0,
-                            checking=False,
-                            public_key=public_key,
-                        ),
-                        timeout=60,
-                    )
-
-                    if deregister_response and deregister_response.get("status") is True:
-                        allocation_status = False
-                        bt.logging.trace(f"Deallocated miner {axon.hotkey}")
-                    else:
-                        retry_count += 1
-                        bt.logging.trace(
-                            f"{axon.hotkey}: Failed to deallocate miner. "
-                            f"(attempt {retry_count}/{max_retries})"
+                    async with self.dendrite as dendrite:
+                        # Send deallocation query
+                        deregister_response = await dendrite(
+                            axon,
+                            Allocate(
+                                timeline=0,
+                                checking=False,
+                                public_key=public_key,
+                            ),
+                            timeout=60,
                         )
-                        if retry_count >= max_retries:
-                            bt.logging.trace(f"{axon.hotkey}: Max retries reached for deallocating miner.")
-                        time.sleep(5)
+
+                        if deregister_response and deregister_response.get("status") is True:
+                            allocation_status = False
+                            bt.logging.trace(f"Deallocated miner {axon.hotkey}")
+                        else:
+                            retry_count += 1
+                            bt.logging.trace(
+                                f"{axon.hotkey}: Failed to deallocate miner. "
+                                f"(attempt {retry_count}/{max_retries})"
+                            )
+                            if retry_count >= max_retries:
+                                bt.logging.trace(f"{axon.hotkey}: Max retries reached for deallocating miner.")
+                            await asyncio.sleep(5)
                 except Exception as e:
                     retry_count += 1
                     bt.logging.trace(
@@ -1049,7 +1050,7 @@ class Validator:
                     )
                     if retry_count >= max_retries:
                         bt.logging.trace(f"{axon.hotkey}: Max retries reached for deallocating miner.")
-                    time.sleep(5)
+                    await asyncio.sleep(5)
         except Exception as e:
             bt.logging.trace(f"{axon.hotkey}: Unexpected error during deallocation: {e}")
 
