@@ -111,6 +111,33 @@ class Allocate(bt.Synapse):
         """
         return self.output
 
+class POG(bt.Synapse):
+    """
+    A simple POG protocol representation which uses bt.Synapse as its base.
+    This protocol helps in handling POG request and response communication between
+    the miner and the validator.
+    
+    Attributes:
+    - pog: A boolean flag.
+    """
+    pog: bool = False
+    def deserialize(self) -> bool:
+        """
+        Deserialize the POG information output. This method retrieves the response from
+        the miner in the form of the pog flag, deserializes it and returns it
+        as the output of the dendrite.query() call.
+
+        Returns:
+        - bool: The deserialized response, which is the value of pog.
+
+        Example:
+        Assuming a POG instance has a pog value of False:
+        >>> pog_instance = POG()
+        >>> pog_instance.pog = False
+        >>> pog_instance.deserialize()
+        False
+        """
+        return self.pog
 
 class Challenge(bt.Synapse):
     # Query parameters
