@@ -294,15 +294,14 @@ class Validator:
         # Instantiate the connection to the db
         cursor = self.db.get_cursor()
         try:
-            # Retrieve all records from the allocation table
-            cursor.execute("SELECT id, hotkey, details FROM allocation")
-            rows = cursor.fetchall()
-            for row in rows:
-                id, hotkey, details = row
+            # Retrieve all hotkeys from the allocation table
+            cursor.execute("SELECT hotkey FROM allocation GROUP BY hotkey")
+            hotkeys = [row[0] for row in cursor.fetchall()]
+            for hotkey in hotkeys:
                 neuron_data = self.find_neuron_by_hotkey(hotkey)
                 if neuron_data:
                     hotkey_list.append(hotkey)
-                else :
+                else:
                     bt.logging.info(f"{hotkey} is not exist in metagraph")
         except Exception as e:
             bt.logging.info(f"An error occurred while retrieving allocation details: {e}")
@@ -320,7 +319,6 @@ class Validator:
         for neuron in neurons:
             if neuron.hotkey == hotkey:
                 return neuron
-        return None
         
     def sync_scores(self):
         # Fetch scoring stats
