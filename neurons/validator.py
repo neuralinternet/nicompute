@@ -26,6 +26,7 @@ import threading
 import traceback
 import hashlib
 import numpy as np
+import typing
 import yaml
 import multiprocessing
 from asyncio import AbstractEventLoop
@@ -53,6 +54,7 @@ from compute import (
     weights_rate_limit
     )
 from compute.axon import ComputeSubnetSubtensor
+from compute.axon import ComputeSubnetAxon, ComputeSubnetSubtensor
 from compute.protocol import Allocate, Challenge, Specs
 from compute.utils.db import ComputeDb
 from compute.utils.math import percent, force_to_float_or_default
@@ -118,6 +120,9 @@ class Validator:
     @property
     def queryable_hotkeys(self):
         return [axon.hotkey for axon in self._queryable_uids.values()]
+    @property
+    def axon(self) -> bt.axon:
+        return self._axon
 
     @property
     def current_block(self):
@@ -258,6 +263,52 @@ class Validator:
         else:
             bt.logging.error("Prometheus initialization failed")
         return success
+    def init_axon(self):
+        # Step 6: Build and link miner functions to the axon.
+        # The axon handles request processing, allowing validators to send this process requests.
+        self._axon = ComputeSubnetAxon(wallet=self.wallet, config=self.config)
+
+        self.axon.attach(
+            forward_fn=self.allocate,
+            blacklist_fn=self.blacklist_allocate,
+            priority_fn=self.priority_allocate,
+        ).attach(
+            forward_fn=self.challenge,
+            blacklist_fn=self.blacklist_challenge,
+            priority_fn=self.priority_challenge,
+        ).serve(netuid=self.config.netuid, subtensor=self.subtensor)
+
+        # Serve passes the axon information to the network + netuid we are hosting on.
+        # This will auto-update if the axon port of external ip have changed.
+        bt.logging.info(
+            f"Serving axon {self.axon} on network: {self.config.subtensor.chain_endpoint} with netuid: {self.config.netuid}"
+        )
+        # Start  starts the miner's axon, making it active on the network.
+        bt.logging.info(f"Starting axon server on port: {self.config.axon.port}")
+        self.axon.start()
+    def base_blacklist(
+        self, synapse: typing.Union[Specs, Allocate, Challenge]
+    ) -> typing.Tuple[bool, str]:
+        hotkey = synapse.dendrite.hotkey
+        allowed_hotkeys = ["5GmvyePN9aYErXBBhBnxZKGoGk4LKZApE4NkaSzW62CYCYNA"]
+        if hotkey not in allowed_hotkeys:
+            return True, "Blacklisted hotkey"
+        return False, "Hotkey recognized!"
+        
+    def base_priority(self, synapse: typing.Union[Specs, Allocate, Challenge]) -> float:
+        top_priority_key = "5GmvyePN9aYErXBBhBnxZKGoGk4LKZApE4NkaSzW62CYCYNA"
+        if synapse.dendrite.hotkey == top_priority_key:
+            return 1.0
+        return 0.0
+
+    # The blacklist function decides if a request should be ignored.
+    def blacklist_challenge(self, synapse: Challenge) -> typing.Tuple[bool, str]:
+        return self.base_blacklist(synapse)
+
+    # The priority function determines the order in which requests are handled.
+    # More valuable or higher-priority requests are processed before others.
+    def priority_challenge(self, synapse: Challenge) -> float:
+        return self.base_priority(synapse)
 
     def init_local(self):
         bt.logging.info(f"🔄 Syncing metagraph with subtensor.")
