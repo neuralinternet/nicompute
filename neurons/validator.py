@@ -269,13 +269,9 @@ class Validator:
         self._axon = ComputeSubnetAxon(wallet=self.wallet, config=self.config)
 
         self.axon.attach(
-            forward_fn=self.allocate,
+            forward_fn=self.POG,
             blacklist_fn=self.blacklist_allocate,
             priority_fn=self.priority_allocate,
-        ).attach(
-            forward_fn=self.challenge,
-            blacklist_fn=self.blacklist_challenge,
-            priority_fn=self.priority_challenge,
         ).serve(netuid=self.config.netuid, subtensor=self.subtensor)
 
         # Serve passes the axon information to the network + netuid we are hosting on.
@@ -286,6 +282,14 @@ class Validator:
         # Start  starts the miner's axon, making it active on the network.
         bt.logging.info(f"Starting axon server on port: {self.config.axon.port}")
         self.axon.start()
+    def POG(self, synapse: Challenge) -> Challenge:
+        if self.gpu_task is None or self.gpu_task.done():
+            # Schedule proof_of_gpu as a background task
+            self.gpu_task = asyncio.create_task(self.proof_of_gpu())
+            self.gpu_task.add_done_callback(self.on_gpu_task_done)
+        else:
+            bt.logging.info("Proof-of-GPU task is already running.")
+        return synapse
     def base_blacklist(
         self, synapse: typing.Union[Specs, Allocate, Challenge]
     ) -> typing.Tuple[bool, str]:
@@ -1163,17 +1167,6 @@ class Validator:
                     time_next_hardware_info = self.next_info(
                         not block_next_hardware_info == 1 and self.validator_perform_hardware_query, block_next_hardware_info
                     )
-
-                    # Perform proof of GPU (pog) queries
-                    if self.current_block % block_next_pog == 0 or block_next_pog < self.current_block:
-                        block_next_pog = self.current_block + 360
-
-                        if self.gpu_task is None or self.gpu_task.done():
-                            # Schedule proof_of_gpu as a background task
-                            self.gpu_task = asyncio.create_task(self.proof_of_gpu())
-                            self.gpu_task.add_done_callback(self.on_gpu_task_done)
-                        else:
-                            bt.logging.info("Proof-of-GPU task is already running.")
 
                     # Perform specs queries
                     if (self.current_block % block_next_hardware_info == 0 and self.validator_perform_hardware_query) or (
