@@ -55,7 +55,7 @@ from compute import (
     )
 from compute.axon import ComputeSubnetSubtensor
 from compute.axon import ComputeSubnetAxon, ComputeSubnetSubtensor
-from compute.protocol import Allocate, Challenge, Specs
+from compute.protocol import Allocate, Challenge, Specs, POG
 from compute.utils.db import ComputeDb
 from compute.utils.math import percent, force_to_float_or_default
 from compute.utils.parser import ComputeArgPaser
@@ -279,7 +279,7 @@ class Validator:
             f"and starting axon server on port: {self.config.axon.port}"
         )
         self.axon.start()
-    def POG(self, synapse: Challenge) -> Challenge:
+    def POG(self, synapse: POG) -> POG:
         if self.gpu_task is None or self.gpu_task.done():
             # Schedule proof_of_gpu as a background task
             self.gpu_task = asyncio.create_task(self.proof_of_gpu())
