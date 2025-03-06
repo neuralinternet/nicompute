@@ -436,7 +436,7 @@ def pause_container(public_key:str):
                 return {"status": False}
         else:
             bt.logging.info(f"Permission denied.")
-            return {"status:": False}
+            return {"status": False}
     except Exception as e:
         bt.logging.info(f"Error pausing container {e}")
         return {"status": False}

@@ -468,7 +468,7 @@ pm2 restart <id>
 You can verify the installation and check the version by running:
 
 ```sh
-pip show compute-subnet
+pip show NI-Compute
 ```
 
 Example output:

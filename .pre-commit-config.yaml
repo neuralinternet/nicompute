@@ -33,3 +33,31 @@ repos:
         language: system
         always_run: true
         verbose: true
+  - repo: local
+    hooks:
+      - id: pip-compile
+        name: 'Resolve requirements'
+        entry: python -m piptools compile --quiet -o requirements.txt
+        stages: [pre-commit, manual]
+        language: system
+        files: pyproject.toml
+        verbose: true
+  - repo: local
+    hooks:
+      - id: pip-compile-dev
+        name: 'Resolve dev requirements'
+        entry: python -m piptools compile --quiet --extra dev -o requirements-dev.txt
+        stages: [pre-commit, manual]
+        language: system
+        files: pyproject.toml
+        verbose: true
+  - repo: local
+    hooks:
+      - id: run-pytest
+        name: 'Run Pytest'
+        entry: python -m pytest --alluredir allure-results
+        language: system
+        stages: [pre-commit, manual]
+        always_run: true
+        verbose: true
+        pass_filenames: false

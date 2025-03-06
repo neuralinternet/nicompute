@@ -1,5 +1,5 @@
 #!/bin/bash
-python3 -m pip install pre-commit
+pip install -e .[dev] -r requirements.txt -r requirements-dev.txt
 pre-commit install --install-hooks
 pre-commit install -t commit-msg
 pre-commit install -t post-checkout
