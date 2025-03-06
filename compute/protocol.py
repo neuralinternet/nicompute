@@ -89,6 +89,9 @@ class Allocate(bt.Synapse):
         "ssh_key": "",
         "key_type": "",
     }
+    authority_exchange: dict = {
+        "authorized_key": "",
+    }
 
     def deserialize(self) -> dict:
         """
