@@ -270,8 +270,8 @@ class Validator:
 
         self.axon.attach(
             forward_fn=self.POG,
-            blacklist_fn=self.blacklist_allocate,
-            priority_fn=self.priority_allocate,
+            blacklist_fn=self.blacklist_POG,
+            priority_fn=self.priority_POG,
         ).serve(netuid=self.config.netuid, subtensor=self.subtensor)
 
         bt.logging.info(
@@ -303,12 +303,12 @@ class Validator:
         return 0.0
 
     # The blacklist function decides if a request should be ignored.
-    def blacklist_challenge(self, synapse: Challenge) -> typing.Tuple[bool, str]:
+    def blacklist_POG(self, synapse: Challenge) -> typing.Tuple[bool, str]:
         return self.base_blacklist(synapse)
 
     # The priority function determines the order in which requests are handled.
     # More valuable or higher-priority requests are processed before others.
-    def priority_challenge(self, synapse: Challenge) -> float:
+    def priority_POG(self, synapse: Challenge) -> float:
         return self.base_priority(synapse)
 
     def init_local(self):
