@@ -213,6 +213,8 @@ class Validator:
         self.threads: List[threading.Thread] = []
 
         self.dendrite = bt.dendrite(wallet=self.wallet)
+        
+        self.init_axon()
 
     @staticmethod
     def init_config():
