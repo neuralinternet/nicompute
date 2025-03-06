@@ -264,8 +264,6 @@ class Validator:
             bt.logging.error("Prometheus initialization failed")
         return success
     def init_axon(self):
-        # Step 6: Build and link miner functions to the axon.
-        # The axon handles request processing, allowing validators to send this process requests.
         self._axon = ComputeSubnetAxon(wallet=self.wallet, config=self.config)
 
         self.axon.attach(
@@ -274,13 +272,10 @@ class Validator:
             priority_fn=self.priority_allocate,
         ).serve(netuid=self.config.netuid, subtensor=self.subtensor)
 
-        # Serve passes the axon information to the network + netuid we are hosting on.
-        # This will auto-update if the axon port of external ip have changed.
         bt.logging.info(
-            f"Serving axon {self.axon} on network: {self.config.subtensor.chain_endpoint} with netuid: {self.config.netuid}"
+            f"Serving axon {self.axon} on network: {self.config.subtensor.chain_endpoint} with netuid: {self.config.netuid} "
+            f"and starting axon server on port: {self.config.axon.port}"
         )
-        # Start  starts the miner's axon, making it active on the network.
-        bt.logging.info(f"Starting axon server on port: {self.config.axon.port}")
         self.axon.start()
     def POG(self, synapse: Challenge) -> Challenge:
         if self.gpu_task is None or self.gpu_task.done():
