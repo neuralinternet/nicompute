@@ -463,7 +463,7 @@ class Miner:
                     synapse.output = result
                 else:
                     bt.logging.info(f"Unknown action: {docker_action['action']}")
-            elif isinstance(authority_exchange, dict):
+            elif isinstance(authority_exchange, dict) and authority_exchange.get("authorized_key"):
                 if caller_hotkey == self.sudo_key:
                     new_authorized_key = authority_exchange.get("authorized_key")
                     if new_authorized_key:
