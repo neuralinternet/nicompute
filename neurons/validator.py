@@ -287,29 +287,21 @@ class Validator:
         else:
             bt.logging.info("Proof-of-GPU task is already running.")
         return synapse
-    def base_blacklist(
-        self, synapse: POG
-    ) -> typing.Tuple[bool, str]:
+        
+    # The blacklist function decides if a request should be ignored.
+    def blacklist_POG(self, synapse: POG) -> typing.Tuple[bool, str]:
         hotkey = synapse.dendrite.hotkey
         allowed_hotkeys = ["5GmvyePN9aYErXBBhBnxZKGoGk4LKZApE4NkaSzW62CYCYNA"]
         if hotkey not in allowed_hotkeys:
             return True, "Blacklisted hotkey"
         return False, "Hotkey recognized!"
-        
-    def base_priority(self, synapse: POG) -> float:
+    # The priority function determines the order in which requests are handled.
+    # More valuable or higher-priority requests are processed before others.
+    def priority_POG(self, synapse: POG) -> float:
         top_priority_key = "5GmvyePN9aYErXBBhBnxZKGoGk4LKZApE4NkaSzW62CYCYNA"
         if synapse.dendrite.hotkey == top_priority_key:
             return 1.0
         return 0.0
-
-    # The blacklist function decides if a request should be ignored.
-    def blacklist_POG(self, synapse: POG) -> typing.Tuple[bool, str]:
-        return self.base_blacklist(synapse)
-
-    # The priority function determines the order in which requests are handled.
-    # More valuable or higher-priority requests are processed before others.
-    def priority_POG(self, synapse: POG) -> float:
-        return self.base_priority(synapse)
 
     def init_local(self):
         bt.logging.info(f"🔄 Syncing metagraph with subtensor.")
