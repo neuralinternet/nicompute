@@ -14,9 +14,9 @@ class watchtower:
     def __init__(self, config):
         self.config = config
         self.metagraph = self.get_metagraph() # Retrieve metagraph state
+        self.subtensor = ComputeSubnetSubtensor(config=self.config)
         self.validators = self.get_valid_validator_hotkeys()
         self.wallet = bt.wallet(config=self.config)
-        self.subtensor = ComputeSubnetSubtensor(config=self.config)
         self.wandb = ComputeWandb(self.config, self.wallet, os.path.basename(__file__))
     def get_metagraph(self):
         """Retrieves the metagraph from subtensor."""
