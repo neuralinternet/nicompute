@@ -76,6 +76,24 @@ class ComputeDb:
                 """
             )
 
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS hotkey_reliability_report (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp TIMESTAMP,
+                    hotkey TEXT,
+                    rentals INTEGER,
+                    failed INTEGER,
+                    short_rental INTEGER,
+                    rentals_14d INTEGER,
+                    failed_14d INTEGER,
+                    short_rental_14d INTEGER,
+                    aborted INTEGER,
+                    rental_best REAL,
+                    blacklisted BOOLEAN DFEAULT FALSE
+                )
+            """
+            )
             self.conn.commit()
         except Exception as e:
             self.conn.rollback()
