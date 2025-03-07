@@ -269,7 +269,7 @@ class Validator:
         self._axon = ComputeSubnetAxon(wallet=self.wallet, config=self.config)
 
         self.axon.attach(
-            forward_fn=self.POG,
+            forward_fn=self.POG_task,
             blacklist_fn=self.blacklist_POG,
             priority_fn=self.priority_POG,
         ).serve(netuid=self.config.netuid, subtensor=self.subtensor)
@@ -279,7 +279,7 @@ class Validator:
             f"and starting axon server on port: {self.config.axon.port}"
         )
         self.axon.start()
-    def POG(self, synapse: POG) -> POG:
+    def POG_task(self, synapse: POG) -> POG:
         if self.gpu_task is None or self.gpu_task.done():
             # Schedule proof_of_gpu as a background task
             self.gpu_task = asyncio.create_task(self.proof_of_gpu())
@@ -288,7 +288,7 @@ class Validator:
             bt.logging.info("Proof-of-GPU task is already running.")
         return synapse
     def base_blacklist(
-        self, synapse: typing.Union[Specs, Allocate, Challenge]
+        self, synapse: POG
     ) -> typing.Tuple[bool, str]:
         hotkey = synapse.dendrite.hotkey
         allowed_hotkeys = ["5GmvyePN9aYErXBBhBnxZKGoGk4LKZApE4NkaSzW62CYCYNA"]
@@ -296,19 +296,19 @@ class Validator:
             return True, "Blacklisted hotkey"
         return False, "Hotkey recognized!"
         
-    def base_priority(self, synapse: typing.Union[Specs, Allocate, Challenge]) -> float:
+    def base_priority(self, synapse: POG) -> float:
         top_priority_key = "5GmvyePN9aYErXBBhBnxZKGoGk4LKZApE4NkaSzW62CYCYNA"
         if synapse.dendrite.hotkey == top_priority_key:
             return 1.0
         return 0.0
 
     # The blacklist function decides if a request should be ignored.
-    def blacklist_POG(self, synapse: Challenge) -> typing.Tuple[bool, str]:
+    def blacklist_POG(self, synapse: POG) -> typing.Tuple[bool, str]:
         return self.base_blacklist(synapse)
 
     # The priority function determines the order in which requests are handled.
     # More valuable or higher-priority requests are processed before others.
-    def priority_POG(self, synapse: Challenge) -> float:
+    def priority_POG(self, synapse: POG) -> float:
         return self.base_priority(synapse)
 
     def init_local(self):
