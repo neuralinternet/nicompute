@@ -1,5 +1,6 @@
 import base64
 import pytest
+import allure
 from unittest.mock import MagicMock, patch, mock_open
 
 from neurons.Miner.container import (
@@ -71,9 +72,12 @@ def docker_client_with_test_container(running_test_container):
     client.containers.list.return_value = [running_test_container]
     return client
 
-# --- Grouped Tests ---
+# --- Grouped Tests using Allure ---
 
+@allure.feature("Run Container")
 class TestRunContainer:
+    @allure.story("Run Container Success")
+    @allure.step("Setup globals, simulate Docker client and run container")
     @patch('os.makedirs')
     @patch('builtins.open', new_callable=mock_open)
     @patch('neurons.Miner.container.rsa.encrypt_data')
@@ -84,27 +88,25 @@ class TestRunContainer:
     @patch('neurons.Miner.container.password_generator')
     @patch('neurons.Miner.container.get_docker')
     def test_run_container_success(self,
-        mock_get_docker,
-        mock_password_generator,
-        mock_build_sample_container,
-        mock_virtual_memory,
-        mock_logging_info,
-        mock_logging_trace,
-        mock_encrypt_data,
-        mock_open_fn,
-        mock_makedirs):
+                                   mock_get_docker,
+                                   mock_password_generator,
+                                   mock_build_sample_container,
+                                   mock_virtual_memory,
+                                   mock_logging_info,
+                                   mock_logging_trace,
+                                   mock_encrypt_data,
+                                   mock_open_fn,
+                                   mock_makedirs):
         """
         run_container:
         Should successfully run a new container when all dependencies are met and
         container.status is 'created'. Returns a dict with status True and the encrypted info.
         """
-        # Set module-level globals required by run_container.
         from neurons.Miner import container as cnt
         cnt.image_name_base = "dummy_base"
         cnt.image_name = "dummy_image"
         cnt.__version_as_int__ = 1
 
-        # Create a dummy container with status "created"
         dummy_container = MagicMock()
         dummy_container.status = "created"
         dummy_client = MagicMock()
@@ -112,11 +114,9 @@ class TestRunContainer:
         dummy_client.containers.run.return_value = dummy_container
         mock_get_docker.return_value = (dummy_client, [])
 
-        # Set fixed password and encrypted data
         mock_password_generator.return_value = "testpwd"
         mock_encrypt_data.return_value = b"encrypted_data"
 
-        # Prepare input parameters
         cpu_usage = {"assignment": "0-1"}
         ram_usage = {"capacity": "5g"}
         hard_disk_usage = {"capacity": "100g"}
@@ -131,14 +131,11 @@ class TestRunContainer:
         }
         testing = True
 
-        # Call run_container
         result = run_container(cpu_usage, ram_usage, hard_disk_usage, gpu_usage,
                                public_key, docker_requirement, testing)
 
-        # Verify that the image was built and container was run.
         dummy_client.images.build.assert_called_once()
         dummy_client.containers.run.assert_called_once()
-        # Ensure container name passed to run() is "test_container"
         _, kwargs = dummy_client.containers.run.call_args
         assert kwargs.get("name") == "test_container"
 
@@ -147,175 +144,194 @@ class TestRunContainer:
         assert result == {"status": True, "info": expected_info}
 
 
+@allure.feature("Container Monitoring")
 class TestCheckContainer:
-    @patch('neurons.Miner.container.get_docker')
-    def test_check_container_running(self, mock_get_docker, running_container):
+    @allure.story("Verify Running Container")
+    def test_check_container_running(self, running_container):
         """
         check_container:
         Returns True when a regular container (with name "container") is running.
         """
-        client = MagicMock()
-        client.containers.list.return_value = [running_container]
-        mock_get_docker.return_value = (client, [running_container])
-        assert check_container() is True
+        with patch('neurons.Miner.container.get_docker') as mock_get_docker:
+            client = MagicMock()
+            client.containers.list.return_value = [running_container]
+            mock_get_docker.return_value = (client, [running_container])
+            assert check_container() is True
 
-    @patch('neurons.Miner.container.get_docker')
-    def test_check_container_test_running(self, mock_get_docker, running_test_container):
+    @allure.story("Verify Test Container Running")
+    def test_check_container_test_running(self, running_test_container):
         """
         check_container:
         Returns True when a test container (with name "test_container") is running.
         """
-        client = MagicMock()
-        client.containers.list.return_value = [running_test_container]
-        mock_get_docker.return_value = (client, [running_test_container])
-        assert check_container() is True
+        with patch('neurons.Miner.container.get_docker') as mock_get_docker:
+            client = MagicMock()
+            client.containers.list.return_value = [running_test_container]
+            mock_get_docker.return_value = (client, [running_test_container])
+            assert check_container() is True
 
-    @patch('neurons.Miner.container.get_docker')
-    def test_check_container_not_running(self, mock_get_docker, running_container):
+    @allure.story("Verify Container Not Found")
+    def test_check_container_not_running(self, running_container):
         """
         check_container:
         Returns False when the container name does not match the expected value.
         """
         running_container.name = "other_container"
-        client = MagicMock()
-        client.containers.list.return_value = [running_container]
-        mock_get_docker.return_value = (client, [running_container])
-        assert check_container() is False
+        with patch('neurons.Miner.container.get_docker') as mock_get_docker:
+            client = MagicMock()
+            client.containers.list.return_value = [running_container]
+            mock_get_docker.return_value = (client, [running_container])
+            assert check_container() is False
 
-    @patch('neurons.Miner.container.get_docker', side_effect=Exception("Test error"))
-    def test_check_container_exception(self, mock_get_docker):
+    @allure.story("Exception in Container Check")
+    def test_check_container_exception(self):
         """
         check_container:
         Returns False when an exception is raised during Docker access.
         """
-        assert check_container() is False
+        with patch('neurons.Miner.container.get_docker', side_effect=Exception("Test error")) as mock_get_docker:
+            assert check_container() is False
 
 
+@allure.feature("Container Pause/Unpause")
 class TestPauseContainer:
-    @patch('neurons.Miner.container.get_docker')
-    @patch('neurons.Miner.container.retrieve_allocation_key')
-    def test_pause_container_success(self, mock_retrieve_allocation_key, mock_get_docker, allocation_key_fixture, running_container):
+    @allure.story("Pause Container Success")
+    def test_pause_container_success(self, allocation_key_fixture, running_container):
         """
         pause_container:
         Pauses the container when the allocation key is valid.
         """
-        mock_retrieve_allocation_key.return_value = allocation_key_fixture
-        client = MagicMock()
-        client.containers.list.return_value = [running_container]
-        mock_get_docker.return_value = (client, [running_container])
-        result = pause_container(allocation_key_fixture)
-        running_container.pause.assert_called_once()
-        assert result == {"status": True}
+        with patch('neurons.Miner.container.get_docker') as mock_get_docker, \
+             patch('neurons.Miner.container.retrieve_allocation_key') as mock_retrieve_allocation_key:
+            mock_retrieve_allocation_key.return_value = allocation_key_fixture
+            client = MagicMock()
+            client.containers.list.return_value = [running_container]
+            mock_get_docker.return_value = (client, [running_container])
+            result = pause_container(allocation_key_fixture)
+            running_container.pause.assert_called_once()
+            assert result == {"status": True}
 
-    @patch('neurons.Miner.container.retrieve_allocation_key', return_value=None)
-    def test_pause_container_no_allocation_key(self, mock_retrieve_allocation_key):
+    @allure.story("Pause Container No Allocation Key")
+    def test_pause_container_no_allocation_key(self):
         """
         pause_container:
         Returns False if no allocation key is retrieved.
         """
-        result = pause_container("test_public_key")
-        assert result == {"status": False}
+        with patch('neurons.Miner.container.retrieve_allocation_key', return_value=None):
+            result = pause_container("test_public_key")
+            assert result == {"status": False}
 
-    @patch('neurons.Miner.container.retrieve_allocation_key')
-    def test_pause_container_key_mismatch(self, mock_retrieve_allocation_key, allocation_key_fixture):
+    @allure.story("Pause Container Key Mismatch")
+    def test_pause_container_key_mismatch(self, allocation_key_fixture):
         """
         pause_container:
         Returns False when the provided allocation key does not match.
         """
-        mock_retrieve_allocation_key.return_value = allocation_key_fixture
-        result = pause_container("invalid_key")
-        assert result == {"status": False}
+        with patch('neurons.Miner.container.retrieve_allocation_key') as mock_retrieve_allocation_key:
+            mock_retrieve_allocation_key.return_value = allocation_key_fixture
+            result = pause_container("invalid_key")
+            assert result == {"status": False}
 
-    @patch('neurons.Miner.container.get_docker')
-    @patch('neurons.Miner.container.retrieve_allocation_key')
-    def test_pause_container_not_found(self, mock_retrieve_allocation_key, mock_get_docker, allocation_key_fixture, running_container):
+    @allure.story("Pause Container Not Found")
+    def test_pause_container_not_found(self, allocation_key_fixture, running_container):
         """
         pause_container:
         Returns False when no container with the expected name is found.
         """
-        running_container.name = "not_found"  # does not contain "container"
-        client = MagicMock()
-        client.containers.list.return_value = [running_container]
-        mock_get_docker.return_value = (client, [running_container])
-        mock_retrieve_allocation_key.return_value = allocation_key_fixture
-        result = pause_container(allocation_key_fixture)
-        assert result == {"status": False}
+        running_container.name = "not_found"
+        with patch('neurons.Miner.container.get_docker') as mock_get_docker, \
+             patch('neurons.Miner.container.retrieve_allocation_key') as mock_retrieve_allocation_key:
+            client = MagicMock()
+            client.containers.list.return_value = [running_container]
+            mock_get_docker.return_value = (client, [running_container])
+            mock_retrieve_allocation_key.return_value = allocation_key_fixture
+            result = pause_container(allocation_key_fixture)
+            assert result == {"status": False}
 
-    @patch('neurons.Miner.container.get_docker', side_effect=Exception("Test error"))
-    @patch('neurons.Miner.container.retrieve_allocation_key')
-    def test_pause_container_exception(self, mock_retrieve_allocation_key, mock_get_docker, allocation_key_fixture):
+    @allure.story("Pause Container Exception")
+    def test_pause_container_exception(self, allocation_key_fixture):
         """
         pause_container:
         Returns False when an exception occurs in get_docker.
         """
-        mock_retrieve_allocation_key.return_value = allocation_key_fixture
-        result = pause_container(allocation_key_fixture)
-        assert result == {"status": False}
+        with patch('neurons.Miner.container.get_docker', side_effect=Exception("Test error")), \
+             patch('neurons.Miner.container.retrieve_allocation_key') as mock_retrieve_allocation_key:
+            mock_retrieve_allocation_key.return_value = allocation_key_fixture
+            result = pause_container(allocation_key_fixture)
+            assert result == {"status": False}
 
 
+@allure.feature("Container Pause/Unpause")
 class TestUnpauseContainer:
-    @patch('neurons.Miner.container.get_docker')
-    @patch('neurons.Miner.container.retrieve_allocation_key')
-    def test_unpause_container_success(self, mock_retrieve_allocation_key, mock_get_docker, allocation_key_fixture, running_container):
+    @allure.story("Unpause Container Success")
+    def test_unpause_container_success(self, allocation_key_fixture, running_container):
         """
         unpause_container:
         Unpauses the container when the allocation key is valid.
         """
-        mock_retrieve_allocation_key.return_value = allocation_key_fixture
-        client = MagicMock()
-        client.containers.list.return_value = [running_container]
-        mock_get_docker.return_value = (client, [running_container])
-        result = unpause_container(allocation_key_fixture)
-        running_container.unpause.assert_called_once()
-        assert result == {"status": True}
+        with patch('neurons.Miner.container.get_docker') as mock_get_docker, \
+             patch('neurons.Miner.container.retrieve_allocation_key') as mock_retrieve_allocation_key:
+            mock_retrieve_allocation_key.return_value = allocation_key_fixture
+            client = MagicMock()
+            client.containers.list.return_value = [running_container]
+            mock_get_docker.return_value = (client, [running_container])
+            result = unpause_container(allocation_key_fixture)
+            running_container.unpause.assert_called_once()
+            assert result == {"status": True}
 
-    @patch('neurons.Miner.container.retrieve_allocation_key', return_value=None)
-    def test_unpause_container_no_allocation_key(self, mock_retrieve_allocation_key):
+    @allure.story("Unpause Container No Allocation Key")
+    def test_unpause_container_no_allocation_key(self):
         """
         unpause_container:
         Returns False if no allocation key is retrieved.
         """
-        result = unpause_container("test_public_key")
-        assert result == {"status": False}
+        with patch('neurons.Miner.container.retrieve_allocation_key', return_value=None):
+            result = unpause_container("test_public_key")
+            assert result == {"status": False}
 
-    @patch('neurons.Miner.container.retrieve_allocation_key')
-    def test_unpause_container_key_mismatch(self, mock_retrieve_allocation_key, allocation_key_fixture):
+    @allure.story("Unpause Container Key Mismatch")
+    def test_unpause_container_key_mismatch(self, allocation_key_fixture):
         """
         unpause_container:
         Returns False when the provided allocation key does not match.
         """
-        mock_retrieve_allocation_key.return_value = allocation_key_fixture
-        result = unpause_container("invalid_key")
-        assert result == {"status": False}
+        with patch('neurons.Miner.container.retrieve_allocation_key') as mock_retrieve_allocation_key:
+            mock_retrieve_allocation_key.return_value = allocation_key_fixture
+            result = unpause_container("invalid_key")
+            assert result == {"status": False}
 
-    @patch('neurons.Miner.container.get_docker')
-    @patch('neurons.Miner.container.retrieve_allocation_key')
-    def test_unpause_container_not_found(self, mock_retrieve_allocation_key, mock_get_docker, allocation_key_fixture, running_container):
+    @allure.story("Unpause Container Not Found")
+    def test_unpause_container_not_found(self, allocation_key_fixture, running_container):
         """
         unpause_container:
         Returns False when no container with the expected name is found.
         """
         running_container.name = "not_found"
-        client = MagicMock()
-        client.containers.list.return_value = [running_container]
-        mock_get_docker.return_value = (client, [running_container])
-        mock_retrieve_allocation_key.return_value = allocation_key_fixture
-        result = unpause_container(allocation_key_fixture)
-        assert result == {"status": False}
+        with patch('neurons.Miner.container.get_docker') as mock_get_docker, \
+             patch('neurons.Miner.container.retrieve_allocation_key') as mock_retrieve_allocation_key:
+            client = MagicMock()
+            client.containers.list.return_value = [running_container]
+            mock_get_docker.return_value = (client, [running_container])
+            mock_retrieve_allocation_key.return_value = allocation_key_fixture
+            result = unpause_container(allocation_key_fixture)
+            assert result == {"status": False}
 
-    @patch('neurons.Miner.container.get_docker', side_effect=Exception("Test error"))
-    @patch('neurons.Miner.container.retrieve_allocation_key')
-    def test_unpause_container_exception(self, mock_retrieve_allocation_key, mock_get_docker, allocation_key_fixture):
+    @allure.story("Unpause Container Exception")
+    def test_unpause_container_exception(self, allocation_key_fixture):
         """
         unpause_container:
         Returns False when an exception occurs in get_docker.
         """
-        mock_retrieve_allocation_key.return_value = allocation_key_fixture
-        result = unpause_container(allocation_key_fixture)
-        assert result == {"status": False}
+        with patch('neurons.Miner.container.get_docker', side_effect=Exception("Test error")), \
+             patch('neurons.Miner.container.retrieve_allocation_key') as mock_retrieve_allocation_key:
+            mock_retrieve_allocation_key.return_value = allocation_key_fixture
+            result = unpause_container(allocation_key_fixture)
+            assert result == {"status": False}
 
 
+@allure.feature("Docker Client")
 class TestGetDocker:
+    @allure.story("Get Docker Success")
     def test_get_docker_success(self):
         """
         get_docker:
@@ -330,6 +346,7 @@ class TestGetDocker:
             assert containers == mock_containers
             mock_client.containers.list.assert_called_once_with(all=True)
 
+    @allure.story("Get Docker Exception")
     def test_get_docker_exception(self):
         """
         get_docker:
@@ -339,6 +356,7 @@ class TestGetDocker:
             with pytest.raises(Exception):
                 get_docker()
 
+    @allure.story("Get Docker List Exception")
     def test_get_docker_list_exception(self):
         """
         get_docker:
@@ -351,68 +369,74 @@ class TestGetDocker:
                 get_docker()
 
 
+@allure.feature("Container Termination")
 class TestKillContainer:
-    @patch('neurons.Miner.container.get_docker')
-    def test_kill_container_test_running(self, mock_get_docker, docker_client_with_test_container, running_test_container):
+    @allure.story("Kill Test Container Running")
+    def test_kill_container_test_running(self, docker_client_with_test_container, running_test_container):
         """
         kill_container:
         Kills a running test container.
         """
-        docker_client_with_test_container.images.prune = MagicMock()
-        mock_get_docker.return_value = (docker_client_with_test_container, [running_test_container])
-        result = kill_container()
-        running_test_container.exec_run.assert_called_once_with(cmd="kill -15 1")
-        running_test_container.wait.assert_called_once()
-        running_test_container.remove.assert_called_once()
-        docker_client_with_test_container.images.prune.assert_called_once_with(filters={"dangling": True})
-        assert result is True
+        with patch('neurons.Miner.container.get_docker') as mock_get_docker:
+            docker_client_with_test_container.images.prune = MagicMock()
+            mock_get_docker.return_value = (docker_client_with_test_container, [running_test_container])
+            result = kill_container()
+            running_test_container.exec_run.assert_called_once_with(cmd="kill -15 1")
+            running_test_container.wait.assert_called_once()
+            running_test_container.remove.assert_called_once()
+            docker_client_with_test_container.images.prune.assert_called_once_with(filters={"dangling": True})
+            assert result is True
 
-    @patch('neurons.Miner.container.get_docker')
-    def test_kill_container_test_not_running(self, mock_get_docker, docker_client_with_test_container, running_test_container):
+    @allure.story("Kill Test Container Not Running")
+    def test_kill_container_test_not_running(self, docker_client_with_test_container, running_test_container):
         """
         kill_container:
         Removes a test container that is not running.
         """
         running_test_container.status = "exited"
-        docker_client_with_test_container.images.prune = MagicMock()
-        mock_get_docker.return_value = (docker_client_with_test_container, [running_test_container])
-        result = kill_container()
-        running_test_container.exec_run.assert_not_called()
-        running_test_container.wait.assert_not_called()
-        running_test_container.remove.assert_called_once()
-        docker_client_with_test_container.images.prune.assert_called_once_with(filters={"dangling": True})
-        assert result is True
+        with patch('neurons.Miner.container.get_docker') as mock_get_docker:
+            docker_client_with_test_container.images.prune = MagicMock()
+            mock_get_docker.return_value = (docker_client_with_test_container, [running_test_container])
+            result = kill_container()
+            running_test_container.exec_run.assert_not_called()
+            running_test_container.wait.assert_not_called()
+            running_test_container.remove.assert_called_once()
+            docker_client_with_test_container.images.prune.assert_called_once_with(filters={"dangling": True})
+            assert result is True
 
-    @patch('neurons.Miner.container.get_docker')
-    def test_kill_container_regular_running(self, mock_get_docker, docker_client_with_container, running_container):
+    @allure.story("Kill Regular Container Running")
+    def test_kill_container_regular_running(self, docker_client_with_container, running_container):
         """
         kill_container:
         Kills a running regular container.
         """
-        docker_client_with_container.images.prune = MagicMock()
-        mock_get_docker.return_value = (docker_client_with_container, [running_container])
-        result = kill_container()
-        running_container.exec_run.assert_called_once_with(cmd="kill -15 1")
-        running_container.wait.assert_called_once()
-        running_container.remove.assert_called_once()
-        docker_client_with_container.images.prune.assert_called_once_with(filters={"dangling": True})
-        assert result is True
+        with patch('neurons.Miner.container.get_docker') as mock_get_docker:
+            docker_client_with_container.images.prune = MagicMock()
+            mock_get_docker.return_value = (docker_client_with_container, [running_container])
+            result = kill_container()
+            running_container.exec_run.assert_called_once_with(cmd="kill -15 1")
+            running_container.wait.assert_called_once()
+            running_container.remove.assert_called_once()
+            docker_client_with_container.images.prune.assert_called_once_with(filters={"dangling": True})
+            assert result is True
 
-    @patch('neurons.Miner.container.get_docker')
-    def test_kill_container_regular_not_running(self, mock_get_docker, docker_client_with_container, exited_container):
+    @allure.story("Kill Regular Container Not Running")
+    def test_kill_container_regular_not_running(self, docker_client_with_container, exited_container):
         """
         kill_container:
         Removes a regular container that is not running.
         """
-        docker_client_with_container.images.prune = MagicMock()
-        mock_get_docker.return_value = (docker_client_with_container, [exited_container])
-        result = kill_container()
-        exited_container.exec_run.assert_not_called()
-        exited_container.wait.assert_not_called()
-        exited_container.remove.assert_called_once()
-        docker_client_with_container.images.prune.assert_called_once_with(filters={"dangling": True})
-        assert result is True
+        with patch('neurons.Miner.container.get_docker') as mock_get_docker:
+            docker_client_with_container.images.prune = MagicMock()
+            mock_get_docker.return_value = (docker_client_with_container, [exited_container])
+            result = kill_container()
+            exited_container.exec_run.assert_not_called()
+            exited_container.wait.assert_not_called()
+            exited_container.remove.assert_called_once()
+            docker_client_with_container.images.prune.assert_called_once_with(filters={"dangling": True})
+            assert result is True
 
+    @allure.story("Kill Container Priority")
     def test_kill_container_priority(self):
         """
         kill_container:
@@ -441,6 +465,7 @@ class TestKillContainer:
             client.images.prune.assert_called_once_with(filters={"dangling": True})
             assert result is True
 
+    @allure.story("Kill Container Not Found")
     def test_kill_container_not_found(self):
         """
         kill_container:
@@ -459,6 +484,7 @@ class TestKillContainer:
             client.images.prune.assert_called_once_with(filters={"dangling": True})
             assert result is True
 
+    @allure.story("Kill Container Exception")
     def test_kill_container_exception(self):
         """
         kill_container:
@@ -469,11 +495,10 @@ class TestKillContainer:
             assert result is False
 
 
+@allure.feature("Docker Daemon Configuration")
 class TestSetDockerBaseSize:
-    @patch('neurons.Miner.container.subprocess.run')
-    @patch('neurons.Miner.container.json.dump')
-    @patch('builtins.open', new_callable=mock_open)
-    def test_set_docker_base_size(self, mock_open_fn, mock_json_dump, mock_subprocess_run):
+    @allure.story("Set Docker Base Size")
+    def test_set_docker_base_size(self,):
         """
         set_docker_base_size:
         Verifies that the function writes the correct JSON content to /etc/docker/daemon.json
@@ -485,10 +510,11 @@ class TestSetDockerBaseSize:
             "storage-driver": "devicemapper",
             "storage-opts": ["dm.basesize=" + base_size]
         }
-
-        set_docker_base_size(base_size)
-
-        mock_open_fn.assert_called_once_with(expected_file, "w")
-        file_handle = mock_open_fn()
-        mock_json_dump.assert_called_once_with(expected_dict, file_handle, indent=4)
-        mock_subprocess_run.assert_called_once_with(["systemctl", "restart", "docker"])
+        with patch('neurons.Miner.container.subprocess.run') as mock_subprocess_run, \
+             patch('neurons.Miner.container.json.dump') as mock_json_dump, \
+             patch('builtins.open', new_callable=mock_open) as mock_open_fn:
+            set_docker_base_size(base_size)
+            mock_open_fn.assert_called_once_with(expected_file, "w")
+            file_handle = mock_open_fn()
+            mock_json_dump.assert_called_once_with(expected_dict, file_handle, indent=4)
+            mock_subprocess_run.assert_called_once_with(["systemctl", "restart", "docker"])
