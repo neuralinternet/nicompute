@@ -84,11 +84,13 @@ class ComputeDb:
                     hotkey TEXT,
                     rentals INTEGER,
                     failed INTEGER,
+                    short_rental INTEGER,
                     rentals_14d INTEGER,
                     failed_14d INTEGER,
+                    short_rental_14d INTEGER,
                     aborted INTEGER,
-                    rental_best INTEGER,
-                    blacklisted BOOLEAN
+                    rental_best REAL,
+                    blacklisted BOOLEAN DFEAULT FALSE
                 )
             """
             )

@@ -218,10 +218,12 @@ class HotkeyReliabilityReport(BaseModel):
     hotkey: str
     rentals: Optional[int] = 0
     failed: Optional[int] = 0
+    short_rental: Optional[int] = 0
     rentals_14d: Optional[int] = 0
     failed_14d: Optional[int] = 0
+    short_rental_14d: Optional[int] = 0
     aborted: Optional[int] = 0
-    rental_best: Optional[int] = 0
+    rental_best: Optional[float] = 0
     blacklisted: Optional[bool] = False
 
 

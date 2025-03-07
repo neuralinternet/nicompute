@@ -303,8 +303,10 @@ def update_hotkey_reliability_report_db(reports: list):
                 report.hotkey,
                 report.rentals,
                 report.failed,
+                report.short_rental,
                 report.rentals_14d,
                 report.failed_14d,
+                report.short_rental_14d,
                 report.aborted,
                 report.rental_best,
                 report.blacklisted
@@ -314,8 +316,8 @@ def update_hotkey_reliability_report_db(reports: list):
         # Perform bulk insert using executemany
         cursor.executemany(
             "INSERT INTO hotkey_reliability_report"
-            "(timestamp, hotkey, rentals, failed, rentals_14d, failed_14d, aborted, rental_best, blacklisted)"
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "(timestamp, hotkey, rentals, failed, short_rental, rentals_14d, failed_14d, aborted, rental_best, short_rental_14d, blacklisted)"
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             report_details_to_insert,
         )
         db.conn.commit()
@@ -344,8 +346,10 @@ def get_hotkey_reliability_reports_db(db: ComputeDb, hotkey: Optional[str] = Non
                 hotkey,
                 rentals,
                 failed,
+                short_rental,
                 rentals_14d,
                 failed_14d,
+                short_rental_14d,
                 aborted,
                 rental_best,
                 blacklisted
@@ -370,8 +374,10 @@ def get_hotkey_reliability_reports_db(db: ComputeDb, hotkey: Optional[str] = Non
                 'hotkey': hotkey,
                 'rentals': rentals,
                 'failed': failed,
+                'short_rental': short_rental,
                 'rentals_14d': rentals_14d,
                 'failed_14d': failed_14d,
+                'short_rental_14d': short_rental_14d,
                 'aborted': aborted,
                 'rental_best': rental_best,
                 'blacklisted': bool(blacklisted),
@@ -380,8 +386,10 @@ def get_hotkey_reliability_reports_db(db: ComputeDb, hotkey: Optional[str] = Non
                 hotkey,
                 rentals,
                 failed,
+                short_rental,
                 rentals_14d,
                 failed_14d,
+                short_rental_14d,
                 aborted,
                 rental_best,
                 blacklisted in rows
