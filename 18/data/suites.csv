@@ -1,0 +1,154 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"Test allocation check when allocation key file is empty.","2","Test allocation check with empty key file","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestCheckIfAllocated","test_allocate","",""
+"
+        get_docker:
+        Raises an exception if listing containers fails.
+        ","1","test_get_docker_list_exception","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestGetDocker","test_miner_container","",""
+"Test allocation check when no container is running.","0","Test allocation check when container is not running","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestCheckAllocation","test_allocate","",""
+"Test successful allocation check with valid public key and running container.","2","Test allocation check when container is allocated","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestCheckIfAllocated","test_allocate","",""
+"This test verifies that the function correctly logs a message when CUDA is available.","2","Verify CUDA availability with a mock CUDA device","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestCudaAvailability","test_pow","",""
+"Test allocation check when allocation key file is not found.","1","Test allocation check when file does not exist","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestCheckIfAllocated","test_allocate","",""
+"
+        check_container:
+        Returns True when a test container (with name ""test_container"") is running.
+        ","1","test_check_container_test_running","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestCheckContainer","test_miner_container","",""
+"
+        kill_container:
+        Kills a running regular container.
+        ","2","test_kill_container_regular_running","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestKillContainer","test_miner_container","",""
+"
+        pause_container:
+        Returns False if no allocation key is retrieved.
+        ","0","test_pause_container_no_allocation_key","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestPauseContainer","test_miner_container","",""
+"
+        unpause_container:
+        Returns False when no container with the expected name is found.
+        ","1","test_unpause_container_not_found","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestUnpauseContainer","test_miner_container","",""
+"Test container registration when run_container fails.","2","Test container registration with run failure","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestRegisterAllocation","test_allocate","",""
+"
+        kill_container:
+        Removes a test container that is not running.
+        ","2","test_kill_container_test_not_running","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestKillContainer","test_miner_container","",""
+"
+        check_container:
+        Returns True when a regular container (with name ""container"") is running.
+        ","1","test_check_container_running","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestCheckContainer","test_miner_container","",""
+"Test allocation check when an exception occurs.","1","Test allocation check with exception","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestCheckIfAllocated","test_allocate","",""
+"Test container deregistration when an exception occurs.","1","Test container deregistration with exception","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestDeregisterAllocation","test_allocate","",""
+"
+        kill_container:
+        Returns False when get_docker raises an exception.
+        ","1","test_kill_container_exception","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestKillContainer","test_miner_container","",""
+"
+        run_container:
+        Should successfully run a new container when all dependencies are met and
+        container.status is 'created'. Returns a dict with status True and the encrypted info.
+        ","10","test_run_container_success","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestRunContainer","test_miner_container","",""
+"
+        kill_container:
+        Does nothing if no matching container is found.
+        ","2","test_kill_container_not_found","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestKillContainer","test_miner_container","",""
+"
+        get_docker:
+        Raises an exception if Docker client initialization fails.
+        ","1","test_get_docker_exception","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestGetDocker","test_miner_container","",""
+"This test verifies that the start function schedules a new job correctly when no existing jobs are present.","2","Verify start function schedules a new job correctly","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestScheduler","test_schedule","",""
+"Test container registration without GPU configuration.","1","Test container registration without GPU","tests.unit_tests.Miner","Fri Mar 07 15:51:05 GMT 2025","passed","Fri Mar 07 15:51:05 GMT 2025","TestRegisterAllocation","test_allocate","",""
+"
+        pause_container:
+        Pauses the container when the allocation key is valid.
+        ","2","test_pause_container_success","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestPauseContainer","test_miner_container","",""
+"Test container registration when an exception occurs.","0","Test container registration with exception","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestRegisterAllocation","test_allocate","",""
+"
+        check_container:
+        Returns False when the container name does not match the expected value.
+        ","2","test_check_container_not_running","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestCheckContainer","test_miner_container","",""
+"
+        pause_container:
+        Returns False when no container with the expected name is found.
+        ","1","test_pause_container_not_found","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestPauseContainer","test_miner_container","",""
+"
+        kill_container:
+        Removes a regular container that is not running.
+        ","2","test_kill_container_regular_not_running","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestKillContainer","test_miner_container","",""
+"
+        unpause_container:
+        Unpauses the container when the allocation key is valid.
+        ","2","test_unpause_container_success","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestUnpauseContainer","test_miner_container","",""
+"Test successful container deregistration with valid public key.","3","Test successful container deregistration","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestDeregisterAllocation","test_allocate","",""
+"Test container deregistration when kill_container fails.","2","Test container deregistration with kill failure","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestDeregisterAllocation","test_allocate","",""
+"
+        unpause_container:
+        Returns False if no allocation key is retrieved.
+        ","1","test_unpause_container_no_allocation_key","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestUnpauseContainer","test_miner_container","",""
+"This test verifies that the function correctly logs a warning when CUDA is not available.","1","Verify CUDA availability when CUDA is not available","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestCudaAvailability","test_pow","",""
+"
+        kill_container:
+        Prioritizes killing the test container over the regular container.
+        ","3","test_kill_container_priority","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestKillContainer","test_miner_container","",""
+"
+        set_docker_base_size:
+        Verifies that the function writes the correct JSON content to /etc/docker/daemon.json
+        and calls subprocess.run to restart Docker.
+        ","4","test_set_docker_base_size","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestSetDockerBaseSize","test_miner_container","",""
+"
+        unpause_container:
+        Returns False when the provided allocation key does not match.
+        ","0","test_unpause_container_key_mismatch","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestUnpauseContainer","test_miner_container","",""
+"
+    Test RSA key pair generation.
+    
+    Verifies that:
+    - Both private and public keys are generated successfully
+    - Keys are returned as strings
+    - Keys have the correct PEM format headers
+    ","26","test_generate_key_pair","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","","test_rsa_encryption","",""
+"Test allocation check with invalid public key.","2","Test allocation check with invalid key","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestCheckIfAllocated","test_allocate","",""
+"
+    Test the complete encryption and decryption cycle.
+    
+    Verifies that:
+    - A message can be encrypted using the public key
+    - The encrypted data is in bytes format
+    - The original message can be recovered through decryption
+    - The decrypted message matches the original input
+    ","88","test_encrypt_decrypt","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:05 GMT 2025","","test_rsa_encryption","",""
+"
+        pause_container:
+        Returns False when the provided allocation key does not match.
+        ","0","test_pause_container_key_mismatch","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestPauseContainer","test_miner_container","",""
+"This test verifies that the start function removes existing jobs and schedules a new one correctly.","3","Verify start function removes existing jobs and schedules a new one","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestScheduler","test_schedule","",""
+"Test container registration with single CPU configuration.","1","Test container registration with single CPU","tests.unit_tests.Miner","Fri Mar 07 15:51:05 GMT 2025","passed","Fri Mar 07 15:51:05 GMT 2025","TestRegisterAllocation","test_allocate","",""
+"
+        pause_container:
+        Returns False when an exception occurs in get_docker.
+        ","0","test_pause_container_exception","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestPauseContainer","test_miner_container","",""
+"
+        check_container:
+        Returns False when an exception is raised during Docker access.
+        ","0","test_check_container_exception","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestCheckContainer","test_miner_container","",""
+"Test allocation check when container is not running.","4","Test allocation check when container is not running","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestCheckIfAllocated","test_allocate","",""
+"Test container deregistration when allocation key file is not found.","1","Test container deregistration with file not found","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestDeregisterAllocation","test_allocate","",""
+"
+        kill_container:
+        Kills a running test container.
+        ","2","test_kill_container_test_running","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestKillContainer","test_miner_container","",""
+"
+        get_docker:
+        Initializes the Docker client and lists containers successfully.
+        ","2","test_get_docker_success","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestGetDocker","test_miner_container","",""
+"Test successful container registration with valid parameters.","2","Test successful container registration","tests.unit_tests.Miner","Fri Mar 07 15:51:05 GMT 2025","passed","Fri Mar 07 15:51:05 GMT 2025","TestRegisterAllocation","test_allocate","",""
+"
+        unpause_container:
+        Returns False when an exception occurs in get_docker.
+        ","1","test_unpause_container_exception","tests","Fri Mar 07 15:51:04 GMT 2025","passed","Fri Mar 07 15:51:04 GMT 2025","TestUnpauseContainer","test_miner_container","",""
+"Test allocation check when a container is already running.","1","Test allocation check when container is running","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestCheckAllocation","test_allocate","",""
+"Test container deregistration with invalid public key.","2","Test container deregistration with invalid key","tests.unit_tests.Miner","Fri Mar 07 15:53:27 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestDeregisterAllocation","test_allocate","",""
+"
+    Test decryption security with mismatched keys.
+    
+    Verifies that:
+    - Attempting to decrypt a message with the wrong private key raises an exception
+    - The encryption system properly enforces key pair matching
+    ","112","test_decrypt_with_wrong_key","tests","Fri Mar 07 15:51:05 GMT 2025","passed","Fri Mar 07 15:51:05 GMT 2025","","test_rsa_encryption","",""
+"Test container registration when kill_container fails.","142126","Test container registration with kill failure","tests.unit_tests.Miner","Fri Mar 07 15:51:05 GMT 2025","passed","Fri Mar 07 15:53:27 GMT 2025","TestRegisterAllocation","test_allocate","",""
