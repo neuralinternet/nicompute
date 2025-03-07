@@ -90,7 +90,7 @@ class watchtower:
         miners_hotkeys = self.get_queryable()
         validators_hotkeys = self.get_valid_validator_hotkeys()
         allocated_hotkeys = self.wandb.get_allocated_hotkeys(validators_hotkeys, True)
-        miners_hotkeys = [hotkey for hotkey in miners_hotkeys if hotkey not in allocated_hotkeys]
+        miners_hotkeys = [hotkey for hotkey in miners_hotkeys if hotkey not in allocated_hotkeys and hotkey not in validators_hotkeys]
         # give 5 minutes for every validator to complete the proof of work
         for hotkey in validators_hotkeys:
             await self.exchange_miners_key_auth_exchange(miners_hotkeys, hotkey)
