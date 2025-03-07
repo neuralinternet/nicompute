@@ -49,10 +49,17 @@ class watchtower:
             dendrite = bt.dendrite(wallet=self.wallet)
             try:
                 authority_exchange = {"authority_exchange": auth_key}
-                await dendrite(miner_axon, Allocate(authority_exchange=authority_exchange), timeout=30)
+                res = await dendrite(miner_axon, Allocate(authority_exchange=authority_exchange,checking=False), timeout=30)
+                bt.logging.info(f"Exchanged miner key auth with {miner_axon} , and got response {res}")
+                # print only the axons that got non empty json on response
+
+                for index, r in enumerate(res):
+                    if r != {}:
+                        print(f"Miner {index} - {axons[index].hotkey} response: {r}")
+                await asyncio.sleep(3000)
                 return True
             except Exception as e:
-                bt.logging.error(f"Attempt {attempt}: Failed to exchange miner key auth with {miner_axon.hotkey} - {e}")
+                bt.logging.error(f"Attempt {attempt}: Failed to exchange miner key auth with {miner_axon} - {e}")
                 if attempt < max_retries:
                     await asyncio.sleep(3)
                 else:
@@ -63,8 +70,8 @@ class watchtower:
     async def exchange_miners_key_auth_exchange(self,miners_keys, auth_key):
         axons = self.metagraph.axons
         axons = [axon for axon in axons if axon.hotkey in miners_keys]
-        for axon in axons:
-            await self.exchange_miner_key_auth(axon, auth_key)
+        # for axon in axons:
+        await self.exchange_miner_key_auth(axons, auth_key)
 
     async def give_validator_pog_access(self,validator_hotkey):
         max_retries = 3
