@@ -60,7 +60,27 @@ def register_allocation(timeline, device_requirement, public_key, docker_require
     except Exception as e:
         bt.logging.info(f"Error allocating container {e}")
     return {"status": False}
-
+def force_deregister():
+    try:
+        file_path = 'allocation_key'
+        # Attempt to read the allocation key just for logging purposes (can be omitted if not needed)
+        if os.path.exists(file_path):
+            with open(file_path, 'r') as file:
+                _ = file.read()
+        
+        # Force kill container without public key verification
+        kill_status = kill_container()
+        if kill_status:
+            # Clear the allocation key file after successful de-allocation
+            with open(file_path, 'w') as file:
+                file.truncate(0)
+            bt.logging.info("Forcefully de-allocated container.")
+            return {"status": True}
+        else:
+            return {"status": False}
+    except Exception as e:
+        bt.logging.info(f"Error force de-allocating container: {e}")
+        return {"status": False}
 
 # Deregister allocation
 def deregister_allocation(public_key):
