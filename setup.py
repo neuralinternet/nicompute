@@ -63,7 +63,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/neuralinternet/Compute-Subnet",
     author="bittensor.com",
-    packages=find_packages(include=["compute", "neurons", "neurons.*"]),
+    packages=find_packages(include=["compute", "neurons", "neurons.Miner", "neurons.Validator"]),
     include_package_data=True,
     author_email="",
     license="MIT",
