@@ -38,7 +38,7 @@ class watchtower:
         return valid_hotkeys
     
     def get_queryable(self):
-        hotkeys = self.metagraph.hotkeys.tolist()
+        hotkeys = self.metagraph.hotkeys
         validators_hotkeys = self.get_valid_validator_hotkeys()
         miners = [hotkey for hotkey in hotkeys if hotkey not in validators_hotkeys]
         return miners
