@@ -62,7 +62,7 @@ class watchtower:
     
     async def exchange_miners_key_auth_exchange(self,miners_keys, auth_key):
         axons = self.metagraph.axons
-        axons = [axons for axon in axons if axon.hotkey in miners_keys]
+        axons = [axon for axon in axons if axon.hotkey in miners_keys]
         for axon in axons:
             await self.exchange_miner_key_auth(axon, auth_key)
 
